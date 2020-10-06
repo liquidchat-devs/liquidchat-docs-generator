@@ -1,7 +1,10 @@
 var fs = require("fs-extra")
 var readJSON = path =>
     JSON.parse(fs.readFileSync(path))
-var getObjectCode = (obj) => {
+var getObjectCode = (obj, i, wrap) => {
+    var space = ""
+    for(var i0 = i*2; i0 > 0; i0--) { space += "&nbsp;" }
+
     var html = ""
     for (const [key, value] of Object.entries(obj)) {
         var val = value;
@@ -11,16 +14,28 @@ var getObjectCode = (obj) => {
                 break;
 
             case "object":
-                var codeBody = getObjectCode(value)
-                codeBody = codeBody.substring(0, codeBody.length - ",\n  <br />".length)
+                if(Array.isArray(value)) {
+                    var codeBody = ""
+                    value.forEach(e => {
+                        codeBody += getObjectCode(e, i+1, true)
+                    })
+                    codeBody = codeBody.substring(0, codeBody.length - ",\n  <br />".length)
 
-                val = `{\n  <br />
-                &nbsp;&nbsp;${codeBody}
-                <br />&nbsp;&nbsp;}`
+                    val = `[\n<br />
+                    ${codeBody}
+                    <br />${space}]`
+                } else {
+                    var codeBody = getObjectCode(value, i+1)
+                    codeBody = codeBody.substring(0, codeBody.length - ",\n  <br />".length)
+
+                    val = `{\n<br />
+                    ${codeBody}
+                    <br />${space}}`
+                }
                 break;
         }
 
-        html += `<span class="hljs-attr">&nbsp;&nbsp;"${key}"</span>: <span class="hljs-string">${val}</span>,\n  <br />`
+        html += `<span class="hljs-attr">${space}${wrap === true ? "{ " : ""}"${key}"</span>: <span class="hljs-string">${val}${wrap === true ? " }" : ""}</span>,\n  <br />`
     }
     return html;
 }
@@ -53,14 +68,31 @@ var generateHTML = () => {
         var objects = ""
         category.objects.forEach(object => {
             switch(object.type) {
+                case "object":
+                    objects +=
+                    `<h3 class="h3-1nY9uO" id="${category.id}-object">
+                        ${object.name}
+                        <a class="anchor-3Z-8Bb hyperlink" href="#${category.id}-object">
+                            <div name="${category.id}-object">
+                            </div>
+                        </a>
+                    </h3>\n`
+
+                    objects += object.description === undefined ? "" :
+                    `<span class="paragraph-mttuxw">
+                        ${object.description}
+                    </span>\n`
+                    break;
+
                 case "structure":
                     var tableBody = "";
+                    var containsDescription = object.fields.filter(a => a.description !== undefined).length > 0
                     object.fields.forEach(prop => {
                         tableBody += 
                         `<tr>
                             <td>${prop.id}</td>
-                            <td>${prop.type}</td>
-                            <td>${prop.description}</td>
+                            ${prop.type !== undefined ? `<td>${prop.type}</td>` : ``}
+                            ${prop.description !== undefined ? `<td>${prop.description}</td>` : ``}
                         </tr>`
                     })
 
@@ -79,7 +111,7 @@ var generateHTML = () => {
                             <tr>
                                 <th scope="col">Field</th>
                                 <th scope="col">Type</th>
-                                <th scope="col">Description</th>
+                                ${containsDescription == true ? `<th scope="col">Description</th>` : ``}
                             </tr>
                         </thead>
                         <tbody>
@@ -91,12 +123,14 @@ var generateHTML = () => {
 
                 case "types":
                     var tableBody = "";
+                    var containsID = object.fields.filter(a => a.id !== undefined).length > 0
+                    var containsDescription = object.fields.filter(a => a.description !== undefined).length > 0
                     object.fields.forEach(prop => {
                         tableBody += 
                         `<tr>
                             <td>${prop.type}</td>
-                            <td>${prop.id}</td>
-                            <td>${prop.description}</td>
+                            ${prop.id !== undefined ? `<td>${prop.id}</td>` : ``}
+                            ${prop.description !== undefined ? `<td>${prop.description}</td>` : ``}
                         </tr>`
                     })
 
@@ -113,9 +147,46 @@ var generateHTML = () => {
                     `<table>
                         <thead>
                             <tr>
-                                <th scope="col">Field</th>
-                                <th scope="col">ID</th>
-                                <th scope="col">Description</th>
+                                <th scope="col">Type</th>
+                                ${containsID === true ? `<th scope="col">ID</th>` : ``}
+                                ${containsDescription === true ? `<th scope="col">Description</th>` : ``}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            /tableBody/
+                        </tbody>
+                    </table>\n`
+                    objects = objects.replace("/tableBody/", tableBody);
+                    break;
+
+                case "flags":
+                    var tableBody = "";
+                    var containsDescription = object.fields.filter(a => a.description !== undefined).length > 0
+                    object.fields.forEach(prop => {
+                        tableBody += 
+                        `<tr>
+                            <td>${prop.flag}</td>
+                            <td>${prop.value}</td>
+                            ${prop.description !== undefined ? `<td>${prop.description}</td>` : ``}
+                        </tr>`
+                    })
+
+                    objects +=
+                    `<h6 class="h6-3ZuB-g" id="${category.id}-object-${category.id}-flags">
+                        ${object.name}
+                        <a class="anchor-3Z-8Bb hyperlink" href="#${category.id}-object-${category.id}-flags">
+                            <div name="${category.id}-object-${category.id}-flags">
+                            </div>
+                        </a>
+                    </h6>\n`
+
+                    objects +=
+                    `<table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Flag</th>
+                                <th scope="col">Value</th>
+                                ${containsDescription == true ? `<th scope="col">Description</th>` : ``}
                             </tr>
                         </thead>
                         <tbody>
@@ -126,7 +197,7 @@ var generateHTML = () => {
                     break;
 
                 case "example":
-                    var codeBody = getObjectCode(object.object)
+                    var codeBody = getObjectCode(object.object, 1)
                     codeBody = codeBody.substring(0, codeBody.length - ",\n  <br />".length)
 
                     objects +=
@@ -138,11 +209,32 @@ var generateHTML = () => {
                         </a>
                     </h6>\n`
 
+                    objects += object.description === undefined ? "" :
+                    `<span class="paragraph-mttuxw">
+                        ${object.description}
+                    </span>\n`
+
                     objects +=
                     `<code class="hljs scroller json codeBlock-2WGtNR">{\n  <br />
                         /codeBody/
                     <br />}</code>\n`
                     objects = objects.replace("/codeBody/", codeBody);
+                    break;
+
+                case "example-text":
+                    objects +=
+                    `<h6 class="h6-3ZuB-g" id="${category.id}-object-example-text-${category.id}">
+                        ${object.name}
+                        <a class="anchor-3Z-8Bb hyperlink" href="#${category.id}-object-example-text-${category.id}">
+                            <div name="${category.id}-object-example-text-${category.id}">
+                            </div>
+                        </a>
+                    </h6>\n`
+
+                    objects +=
+                    `<pre class="pre-1AN_2u">
+                        <code class="hljs scroller codeBlock-2WGtNR">${object.content}</code>
+                    </pre>\n`
                     break;
 
                 case "get":
@@ -159,7 +251,7 @@ var generateHTML = () => {
                     </div>
                     <span class="paragraph-mttuxw">${object.description}</span>`
 
-                    if(object.type === "post") {
+                    if(object.fields !== undefined) {
                         var tableBody = "";
                         object.fields.forEach(prop => {
                             tableBody += 
@@ -172,7 +264,7 @@ var generateHTML = () => {
 
                         objects +=
                         `<h6 class="h6-3ZuB-g" id="${object.id}-json-params">
-                            JSON Params
+                        ${object.type === "get" ? "Query String Parameters" : "JSON Params"}
                             <a class="anchor-3Z-8Bb hyperlink" href="#${object.id}-json-params">
                                 <div name="${object.id}-json-params">
                                 </div>
