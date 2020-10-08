@@ -1,3 +1,4 @@
+const { fchmodSync } = require("fs-extra")
 var fs = require("fs-extra")
 var readJSON = path =>
     JSON.parse(fs.readFileSync(path))
@@ -40,9 +41,10 @@ var getObjectCode = (obj, i, wrap) => {
     return html;
 }
 
-this.inputPath = process.cwd() + "/categories.json"
-this.outputPath1 = process.cwd() + "/../assets/docs.html"
-this.outputPath2 = process.cwd() + "/../assets/buttons.html"
+this.inputPath = process.cwd() + "/data/categories.json"
+this.outputPath = process.cwd() + "/../index.html"
+this.baseDocument = fs.readFileSync(process.cwd() + "/data/base.html").toString()
+
 var generateHTML = () => {
     console.log("Generating new HTML...")
 
@@ -264,7 +266,8 @@ var generateHTML = () => {
 
                         objects +=
                         `<h6 class="h6-3ZuB-g" id="${object.id}-json-params">
-                        ${object.type === "get" ? "Query String Parameters" : "JSON Params"}
+                        <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px" onClick=switchElement('json-params-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
+                            ${object.type === "get" ? "Query String Parameters" : "JSON Params"}
                             <a class="anchor-3Z-8Bb hyperlink" href="#${object.id}-json-params">
                                 <div name="${object.id}-json-params">
                                 </div>
@@ -272,11 +275,48 @@ var generateHTML = () => {
                         </h6>\n`
 
                         objects +=
-                        `<table>
+                        `<table id="json-params-${object.id}">
                             <thead>
                                 <tr>
                                     <th scope="col">Field</th>
                                     <th scope="col">Type</th>
+                                    <th scope="col">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                /tableBody/
+                            </tbody>
+                        </table>\n`
+                        objects = objects.replace("/tableBody/", tableBody);
+                    }
+
+                    if(object.errorCodes !== undefined) {
+                        var tableBody = "";
+                        object.errorCodes.forEach(prop => {
+                            tableBody += 
+                            `<tr>
+                                <td>${prop.name}</td>
+                                <td>${prop.id}</td>
+                                <td>${prop.description}</td>
+                            </tr>`
+                        })
+
+                        objects +=
+                        `<h6 class="h6-3ZuB-g" id="${object.id}-error-codes">
+                            <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px" onClick=switchElement('error-codes-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
+                            Error Codes
+                            <a class="anchor-3Z-8Bb hyperlink" href="#${object.id}-error-codes">
+                                <div name="${object.id}-error-codes">
+                                </div>
+                            </a>
+                        </h6>\n`
+
+                        objects +=
+                        `<table id="error-codes-${object.id}">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">ID</th>
                                     <th scope="col">Description</th>
                                 </tr>
                             </thead>
@@ -293,9 +333,11 @@ var generateHTML = () => {
         html = html.replace("/objects/", objects)
     });
 
+    html = this.baseDocument.replace("/content/", html)
+    html = html.replace("/buttons/", html2);
+
     console.log("Done!")
-    fs.writeFile(this.outputPath1, html, () => {  });
-    fs.writeFile(this.outputPath2, html2, () => {  });
+    fs.writeFile(this.outputPath, html, () => {  });
 }
 
 generateHTML();
