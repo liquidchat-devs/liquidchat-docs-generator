@@ -266,7 +266,7 @@ var generateHTML = () => {
 
                         objects +=
                         `<h6 class="h6-3ZuB-g" id="${object.id}-json-params">
-                        <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px" onClick=switchElement('json-params-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
+                        <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px; transform: rotate(90deg);" id="json-params-${object.id}-switch" onClick=switchElement('json-params-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
                             ${object.type === "get" ? "Query String Parameters" : "JSON Params"}
                             <a class="anchor-3Z-8Bb hyperlink" href="#${object.id}-json-params">
                                 <div name="${object.id}-json-params">
@@ -303,7 +303,7 @@ var generateHTML = () => {
 
                         objects +=
                         `<h6 class="h6-3ZuB-g" id="${object.id}-error-codes">
-                            <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px" onClick=switchElement('error-codes-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
+                            <svg class="iconPlay-2kgvwV icon-3ZFEtL" aria-hidden="false" width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px; transform: rotate(90deg);" id="error-codes-${object.id}-switch" onClick=switchElement('error-codes-${object.id}')><polygon fill="currentColor" points="0 0 0 14 11 7" transform="translate(7 5)"></polygon></svg>
                             Error Codes
                             <a class="anchor-3Z-8Bb hyperlink" href="#${object.id}-error-codes">
                                 <div name="${object.id}-error-codes">
